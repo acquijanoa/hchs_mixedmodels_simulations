@@ -56,16 +56,21 @@ is fitted with scen3, and the results are pooled with Rubin's rules. scen4 uses
 
 **Diagnostics for scen3 on oct2026** (complete data)
 On oct2026, scen3 overestimates `var_subid` (+3.4%, coverage 0.83), while on dec2024 it is
-unbiased. Three variants locate the cause:
+unbiased. Five variants locate the cause:
 
 | Run | Change from scen3 | `var_subid` bias / coverage |
 |---|---|---|
 | scen3_strata | Design-stratum indicators in the model and in the truth | +3.4% / 0.83 |
 | scen3_srs | Simple random sample of households from the population, unweighted | 0.0% / 0.95 |
 | scen3_unw | Same design samples as scen3, unweighted | +0.3% / 0.94 |
+| scen3_vunw `none` | Step 1 as scen3; step 2 unweighted at both levels | +0.4% / 0.94 |
+| scen3_vunw `hh` | Step 1 as scen3; step 2 with household weight `w_bghh` only, subjects unweighted | +3.1% / 0.85 |
 
 The bias comes from the step 2 weights, not from the sample selection or the population.
-The fixed effects still need the weights: unweighted, `age_strat_new` is 17% off (coverage 0.24).
+The household weight alone reproduces almost all of it (scen3_vunw `hh`), so the subject
+weight in step 2 adds little. The fixed effects still need the weights: unweighted,
+`age_strat_new` is 17% off (coverage 0.24). With step 1 weighted and step 2 unweighted
+(scen3_vunw `none`), the fixed effects stay unbiased (coverage 0.94–0.96).
 
 **Why oct2026 and not dec2024: informative subject weights.** The two populations'
 samples have the same design: 1.37 subjects per household, 69.5% single-subject households,
@@ -85,10 +90,14 @@ not residuals, so part of it may be age entering the model only through `age_str
 | scen1 | `sub_s1`, one step | −7.8% / 0.97 | +3.1% / 0.86 | biased (coverage 0.89–0.91) |
 | scen2 | `sub_s2`, one step | +9.9% / 0.88 | +0.8% / 0.93 | biased (coverage 0.88–0.91) |
 | scen3_unw | none | −7.1% / 0.96 | +0.3% / 0.94 | `age_strat_new` 17% off |
+| scen3_vunw `none` | none in step 2 (household unweighted too) | −6.2% / 0.96 | +0.4% / 0.94 | unbiased |
+| scen3_vunw `hh` | none in step 2 (household weighted) | +1.2% / 0.94 | +3.1% / 0.85 | unbiased |
 
 `s1` and `s2` give the same `var_hhid + var_subid` (202.1 against a truth of 197.9, +2.1%).
 The weighting inflates the total between-subject variance, and the scaling only decides how the
-excess is split between the household and subject levels. Neither scaling removes it.
+excess is split between the household and subject levels. Neither scaling removes it. Dropping
+the subject weight from step 2 does not remove it either: with the household weight alone the
+total is 203.7 (+2.9%), and with no weights in step 2 it is 197.3 (−0.3%).
 
 ## Runs
 
@@ -99,15 +108,16 @@ excess is split between the household and subject levels. Neither scaling remove
 | scen3 | dec2024, oct2026 |
 | scen3_strata | dec2024, oct2026 |
 | scen3_srs, scen3_unw, scen3_s2 | oct2026 |
+| scen3_vunw `none`, `hh` | oct2026 |
 | scen4 v1–v3, scen5 v1–v3 | oct2026 |
 
 ## Layout
 
 ```
 scripts/
-  stata/        scen{0,1,2,3}.do, scen3_{strata,srs,unw,s2}.do, scen{4,5}_mi.do,
+  stata/        scen{0,1,2,3}.do, scen3_{strata,srs,unw,s2,vunw}.do, scen{4,5}_mi.do,
                 population_truth_hhsub.do, population_truth_strata.do
-  slurm/        population_truth.slurm, scen{0,1,2,3}.slurm, scen3_{strata,srs,unw,s2}.slurm,
+  slurm/        population_truth.slurm, scen{0,1,2,3}.slurm, scen3_{strata,srs,unw,s2,vunw}.slurm,
                 scen{4,5}_mi.slurm, submit_coverage.slurm
   evaluation/   coverage_assessment.R, compare_weights.R
 data/
@@ -152,10 +162,12 @@ because the full run skips replicates that already have output.
 | scen3_srs | `sbatch --array=1-34 scripts/slurm/scen3_srs.slurm oct2026` |
 | scen3_unw | `sbatch --array=1-17 scripts/slurm/scen3_unw.slurm oct2026` |
 | scen3_s2 | `sbatch --array=1-38 scripts/slurm/scen3_s2.slurm oct2026` |
+| scen3_vunw | `sbatch --array=1-28 scripts/slurm/scen3_vunw.slurm none oct2026` |
 | scen4 | `sbatch --array=1-77 scripts/slurm/scen4_mi.slurm 1 oct2026` |
 | scen5 | `sbatch --array=1-77 scripts/slurm/scen5_mi.slurm 1 oct2026` |
 
-For the MI scenarios, the first argument is the variant (1–3).
+For the MI scenarios, the first argument is the variant (1–3). For scen3_vunw, it is the
+step 2 weighting (`none` or `hh`), and each one is a separate array.
 
 **4. Coverage**, once the estimates exist:
 

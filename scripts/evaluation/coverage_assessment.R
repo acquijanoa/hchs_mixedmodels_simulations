@@ -77,6 +77,20 @@ for (population in c("dec2024", "oct2026")) {
   )
 }
 
+# Scenario 3 with an unweighted Step 2 (none) or household weight only (hh).
+for (population in c("dec2024", "oct2026")) {
+  for (step2 in c("none", "hh")) {
+    presets[[paste0("3vunw_", step2, "_", population)]] <- list(
+      coef_dir = file.path(repo_root, "data", "estimates", population, "scen3_vunw", step2),
+      file_pattern = "^scen3_vunw_coef_[0-9]+\\.csv$",
+      sim_id_pattern = "^scen3_vunw_coef_([0-9]+)\\.csv$",
+      out_file = file.path(repo_root, "data", "summaries", population, paste0("coverage_scen3_vunw_", step2, ".csv")),
+      true_file = truth_file(population),
+      label = paste0("scen3_vunw_", step2, "_", population)
+    )
+  }
+}
+
 # Scenarios 4 (s1) and 5 (s2): MI with scaled weights as imputation covariates, variants v1-v3,
 # on the Oct2026 samples.
 for (scen_i in c("4", "5")) {
