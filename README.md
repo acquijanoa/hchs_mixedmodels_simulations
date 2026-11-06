@@ -91,15 +91,6 @@ weight in step 2 adds little. The fixed effects still need the weights: unweight
 `age_strat_new` is 17% off (coverage 0.24). With step 1 weighted and step 2 unweighted
 (scen3_vunw `none`), the fixed effects stay unbiased (coverage 0.94–0.96).
 
-**Why oct2026 and not dec2024: informative subject weights.** The two populations'
-samples have the same design: 1.37 subjects per household, 69.5% single-subject households,
-the same within-household variation of `W_sub` and the same `s1`/`s2` scaled weights. They differ
-in how informative the subject weight is. Within households, the correlation between log `W_sub` and the
-subject's deviation from the household mean outcome is 0.40 on oct2026 against 0.21 on dec2024
-(`scripts/evaluation/compare_weights.R`, 50 samples per population,
-`data/summaries/diagnostics/weight_comparison_dec2024_oct2026.csv`). This uses the raw outcome,
-not residuals, so part of it may be age entering the model only through `age_strat_new`.
-
 **Subject-weight scaling on oct2026.** scen3_s2 is scen3 with the `s2`-scaled subject weight in step 2.
 
 | Run | Subject weight | `var_hhid` bias / coverage | `var_subid` bias / coverage | Fixed effects |
