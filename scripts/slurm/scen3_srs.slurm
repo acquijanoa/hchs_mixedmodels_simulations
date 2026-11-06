@@ -28,6 +28,7 @@ for SIM in $(seq "$FIRST" "$LAST"); do
     [ -s "$OUT" ] && continue
     START=$(date +%s)
     timeout 120m stata-se -b do "${SLURM_SUBMIT_DIR}/scripts/stata/scen3_srs.do" "$SIM" "$POP"
+    grep -h "^FITCHECK" *.log
     [ -s "$OUT" ] && echo "rep $SIM done in $(( $(date +%s) - START )) s" || echo "rep $SIM FAILED after $(( $(date +%s) - START )) s" >&2
 done
 

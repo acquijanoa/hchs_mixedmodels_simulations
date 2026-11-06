@@ -50,6 +50,7 @@ meglm y_gfr age_strat_new x12 x17 x18 x6 y_bmi [pw=w_visit] || ///
     gl_hhid:  , pweight(w_bghh) || ///
     gl_subid: , pweight(w_sub_glob)  ///
     vce(cluster gl_hhid)
+display "FITCHECK sim=`sim_id' step=1 converged=" e(converged)
 
 * Save Step 1 fixed-effect point estimates, SEs, and residual variance s2
 tempname rt1
@@ -87,6 +88,7 @@ meglm y_gfr age_strat_new x12 x17 x18 x6 y_bmi [pw=w_visit] || ///
     gl_subid: , pweight(sub_s1) ///
     vce(cluster gl_hhid) ///
     constraints(1/`c')
+display "FITCHECK sim=`sim_id' step=2 converged=" e(converged)
 
 * ==============================================================================
 * COLLECT RESULTS
