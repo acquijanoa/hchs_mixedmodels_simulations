@@ -54,6 +54,25 @@ is fitted with scen3, and the results are pooled with Rubin's rules. scen4 uses
 | v2 | `log(w_bg) + log(hh_s) + log(sub_s)` |
 | v3 | `log(w_bg) + log(hhsub_s)` |
 
+**Weights by run, step and level.** Visits always have weight 1. `w_bghh` is the raw
+household weight. `w_sub_glob` is the subject weight `W_sub` scaled to mean 1 over the
+sample. `sub_s1` and `sub_s2` are `W_sub` scaled within household. The fixed effects and
+`s2` come from step 1, and `var_hhid` and `var_subid` from step 2. A one-step run takes
+every estimate from its single fit.
+
+| Run | Step 1 household | Step 1 subject | Step 2 household | Step 2 subject |
+|---|---|---|---|---|
+| scen0 | `w_bghh` | `w_sub_glob` | — (one step) | — |
+| scen1 | `w_bghh` | `sub_s1` | — (one step) | — |
+| scen2 | `w_bghh` | `sub_s2` | — (one step) | — |
+| scen3, scen3_strata, scen4/5 (each imputation) | `w_bghh` | `w_sub_glob` | `w_bghh` | `sub_s1` |
+| scen3_s2 | `w_bghh` | `w_sub_glob` | `w_bghh` | `sub_s2` |
+| scen3_vunw `hh` | `w_bghh` | `w_sub_glob` | `w_bghh` | 1 |
+| scen3_vunw `none` | `w_bghh` | `w_sub_glob` | 1 | 1 |
+| scen3_raw | `w_bghh` | `w_sub_glob` | `w_bghh` | `w_sub` (raw) |
+| scen3_unw | 1 | 1 | — (one step) | — |
+| scen3_srs (SRS of households) | 1 | 1 | — (one step) | — |
+
 **Diagnostics for scen3 on oct2026** (complete data)
 On oct2026, scen3 overestimates `var_subid` (+3.4%, coverage 0.83), while on dec2024 it is
 unbiased. Five variants locate the cause:
@@ -92,12 +111,18 @@ not residuals, so part of it may be age entering the model only through `age_str
 | scen3_unw | none | −7.1% / 0.96 | +0.3% / 0.94 | `age_strat_new` 17% off |
 | scen3_vunw `none` | none in step 2 (household unweighted too) | −6.2% / 0.96 | +0.4% / 0.94 | unbiased |
 | scen3_vunw `hh` | none in step 2 (household weighted) | +1.2% / 0.94 | +3.1% / 0.85 | unbiased |
+| scen3_raw | raw `w_sub`, step 2 | +624% / 0.00 | −72% / 0.00 | unbiased |
 
 `s1` and `s2` give the same `var_hhid + var_subid` (202.1 against a truth of 197.9, +2.1%).
 The weighting inflates the total between-subject variance, and the scaling only decides how the
 excess is split between the household and subject levels. Neither scaling removes it. Dropping
 the subject weight from step 2 does not remove it either: with the household weight alone the
 total is 203.7 (+2.9%), and with no weights in step 2 it is 197.3 (−0.3%).
+
+With the raw subject weight in step 2 (scen3_raw), most of the subject variance moves to the
+household level (`var_hhid` 164.6 against 22.7, `var_subid` 49.6 against 175.2), and the total
+rises to 214.2 (+8.2%). Scaling the subject weight within household is necessary; the remaining
+`var_subid` bias in scen3 comes from the household weight.
 
 ## Runs
 
@@ -109,15 +134,16 @@ total is 203.7 (+2.9%), and with no weights in step 2 it is 197.3 (−0.3%).
 | scen3_strata | dec2024, oct2026 |
 | scen3_srs, scen3_unw, scen3_s2 | oct2026 |
 | scen3_vunw `none`, `hh` | oct2026 |
+| scen3_raw | oct2026 |
 | scen4 v1–v3, scen5 v1–v3 | oct2026 |
 
 ## Layout
 
 ```
 scripts/
-  stata/        scen{0,1,2,3}.do, scen3_{strata,srs,unw,s2,vunw}.do, scen{4,5}_mi.do,
+  stata/        scen{0,1,2,3}.do, scen3_{strata,srs,unw,s2,vunw,raw}.do, scen{4,5}_mi.do,
                 population_truth_hhsub.do, population_truth_strata.do
-  slurm/        population_truth.slurm, scen{0,1,2,3}.slurm, scen3_{strata,srs,unw,s2,vunw}.slurm,
+  slurm/        population_truth.slurm, scen{0,1,2,3}.slurm, scen3_{strata,srs,unw,s2,vunw,raw}.slurm,
                 scen{4,5}_mi.slurm, submit_coverage.slurm
   evaluation/   coverage_assessment.R, compare_weights.R
 data/
@@ -163,6 +189,7 @@ because the full run skips replicates that already have output.
 | scen3_unw | `sbatch --array=1-17 scripts/slurm/scen3_unw.slurm oct2026` |
 | scen3_s2 | `sbatch --array=1-38 scripts/slurm/scen3_s2.slurm oct2026` |
 | scen3_vunw | `sbatch --array=1-28 scripts/slurm/scen3_vunw.slurm none oct2026` |
+| scen3_raw | `sbatch --array=1-50 scripts/slurm/scen3_raw.slurm oct2026` (10 CPUs per task, 10 reps in parallel) |
 | scen4 | `sbatch --array=1-77 scripts/slurm/scen4_mi.slurm 1 oct2026` |
 | scen5 | `sbatch --array=1-77 scripts/slurm/scen5_mi.slurm 1 oct2026` |
 

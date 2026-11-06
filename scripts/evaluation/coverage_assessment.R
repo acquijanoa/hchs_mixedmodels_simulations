@@ -77,6 +77,18 @@ for (population in c("dec2024", "oct2026")) {
   )
 }
 
+# Scenario 3 with raw (unscaled) w_bghh and w_sub in Step 2.
+for (population in c("dec2024", "oct2026")) {
+  presets[[paste0("3raw_", population)]] <- list(
+    coef_dir = file.path(repo_root, "data", "estimates", population, "scen3_raw"),
+    file_pattern = "^scen3_raw_coef_[0-9]+\\.csv$",
+    sim_id_pattern = "^scen3_raw_coef_([0-9]+)\\.csv$",
+    out_file = file.path(repo_root, "data", "summaries", population, "coverage_scen3_raw.csv"),
+    true_file = truth_file(population),
+    label = paste0("scen3_raw_", population)
+  )
+}
+
 # Scenario 3 with an unweighted Step 2 (none) or household weight only (hh).
 for (population in c("dec2024", "oct2026")) {
   for (step2 in c("none", "hh")) {
