@@ -67,29 +67,54 @@ unbiased. Three variants locate the cause:
 The bias comes from the step 2 weights, not from the sample selection or the population.
 The fixed effects still need the weights: unweighted, `age_strat_new` is 17% off (coverage 0.24).
 
+**Why oct2026 and not dec2024: informative subject weights.** The two populations'
+samples have the same design: 1.37 subjects per household, 69.5% single-subject households,
+the same within-household variation of `W_sub` and the same `s1`/`s2` scaled weights. They differ
+in how informative the subject weight is. Within households, the correlation between log `W_sub` and the
+subject's deviation from the household mean outcome is 0.40 on oct2026 against 0.21 on dec2024
+(`scripts/evaluation/compare_weights.R`, 50 samples per population,
+`data/summaries/diagnostics/weight_comparison_dec2024_oct2026.csv`). This uses the raw outcome,
+not residuals, so part of it may be age entering the model only through `age_strat_new`.
+
+**Subject-weight scaling on oct2026.** scen3_s2 is scen3 with the `s2`-scaled subject weight in step 2.
+
+| Run | Subject weight | `var_hhid` bias / coverage | `var_subid` bias / coverage | Fixed effects |
+|---|---|---|---|---|
+| scen3 | `sub_s1`, step 2 | −7.8% / 0.97 | +3.4% / 0.83 | unbiased |
+| scen3_s2 | `sub_s2`, step 2 | +9.9% / 0.88 | +1.1% / 0.93 | unbiased |
+| scen1 | `sub_s1`, one step | −7.8% / 0.97 | +3.1% / 0.86 | biased (coverage 0.89–0.91) |
+| scen2 | `sub_s2`, one step | +9.9% / 0.88 | +0.8% / 0.93 | biased (coverage 0.88–0.91) |
+| scen3_unw | none | −7.1% / 0.96 | +0.3% / 0.94 | `age_strat_new` 17% off |
+
+`s1` and `s2` give the same `var_hhid + var_subid` (202.1 against a truth of 197.9, +2.1%).
+The weighting inflates the total between-subject variance, and the scaling only decides how the
+excess is split between the household and subject levels. Neither scaling removes it.
+
 ## Runs
 
 | Scenario | Populations |
 |---|---|
-| scen0, scen1, scen2 | dec2024 |
+| scen0 | dec2024 |
+| scen1, scen2 | dec2024, oct2026 |
 | scen3 | dec2024, oct2026 |
 | scen3_strata | dec2024, oct2026 |
-| scen3_srs, scen3_unw | oct2026 |
+| scen3_srs, scen3_unw, scen3_s2 | oct2026 |
 | scen4 v1–v3, scen5 v1–v3 | oct2026 |
 
 ## Layout
 
 ```
 scripts/
-  stata/        scen{0,1,2,3}.do, scen3_{strata,srs,unw}.do, scen{4,5}_mi.do,
+  stata/        scen{0,1,2,3}.do, scen3_{strata,srs,unw,s2}.do, scen{4,5}_mi.do,
                 population_truth_hhsub.do, population_truth_strata.do
-  slurm/        population_truth.slurm, scen{0,1,2,3}.slurm, scen3_{strata,srs,unw}.slurm,
+  slurm/        population_truth.slurm, scen{0,1,2,3}.slurm, scen3_{strata,srs,unw,s2}.slurm,
                 scen{4,5}_mi.slurm, submit_coverage.slurm
-  evaluation/   coverage_assessment.R
+  evaluation/   coverage_assessment.R, compare_weights.R
 data/
   population_coefficients/   truth per population and model: _hhsub, _strata (tracked)
   estimates/<pop>/<scen>/    one CSV per replicate (not tracked)
   summaries/<pop>/           coverage tables (tracked)
+  summaries/diagnostics/     weight comparison across populations (tracked)
 ```
 
 ## Running
@@ -120,12 +145,13 @@ because the full run skips replicates that already have output.
 | Run | Command |
 |---|---|
 | scen0 | `sbatch --array=1-17 scripts/slurm/scen0.slurm dec2024` |
-| scen1 | `sbatch --array=1-15 scripts/slurm/scen1.slurm dec2024` |
-| scen2 | `sbatch --array=1-13 scripts/slurm/scen2.slurm dec2024` |
+| scen1 | `sbatch --array=1-30 scripts/slurm/scen1.slurm oct2026` (BLOCK 34, sized on oct2026) |
+| scen2 | `sbatch --array=1-30 scripts/slurm/scen2.slurm oct2026` (BLOCK 34, sized on oct2026) |
 | scen3 | `sbatch --array=1-19 scripts/slurm/scen3.slurm dec2024` |
 | scen3_strata | `sbatch --array=1-40 scripts/slurm/scen3_strata.slurm oct2026` |
 | scen3_srs | `sbatch --array=1-34 scripts/slurm/scen3_srs.slurm oct2026` |
 | scen3_unw | `sbatch --array=1-17 scripts/slurm/scen3_unw.slurm oct2026` |
+| scen3_s2 | `sbatch --array=1-38 scripts/slurm/scen3_s2.slurm oct2026` |
 | scen4 | `sbatch --array=1-77 scripts/slurm/scen4_mi.slurm 1 oct2026` |
 | scen5 | `sbatch --array=1-77 scripts/slurm/scen5_mi.slurm 1 oct2026` |
 

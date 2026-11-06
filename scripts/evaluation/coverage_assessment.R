@@ -65,6 +65,18 @@ for (population in c("dec2024", "oct2026")) {
   )
 }
 
+# Scenario 3 with the cluster-size subject weight (sub_s2) in Step 2.
+for (population in c("dec2024", "oct2026")) {
+  presets[[paste0("3s2_", population)]] <- list(
+    coef_dir = file.path(repo_root, "data", "estimates", population, "scen3_s2"),
+    file_pattern = "^scen3_s2_coef_[0-9]+\\.csv$",
+    sim_id_pattern = "^scen3_s2_coef_([0-9]+)\\.csv$",
+    out_file = file.path(repo_root, "data", "summaries", population, "coverage_scen3_s2.csv"),
+    true_file = truth_file(population),
+    label = paste0("scen3_s2_", population)
+  )
+}
+
 # Scenarios 4 (s1) and 5 (s2): MI with scaled weights as imputation covariates, variants v1-v3,
 # on the Oct2026 samples.
 for (scen_i in c("4", "5")) {
